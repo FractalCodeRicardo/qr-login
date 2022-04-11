@@ -54,9 +54,9 @@ registration.get = async function (id) {
     return reg;
 }
 
-registration.update = async function (id, status) {
+registration.update = async function (id, data) {
     let db = await this.open();
-    await db.run('UPDATE registration SET status = ? WHERE id = ?', status, id)
+    await db.run('UPDATE registration SET status = ?, device = ? WHERE id = ?', data.status, data.device, id)
 
     return {
         id: id,

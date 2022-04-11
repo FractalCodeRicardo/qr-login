@@ -1,5 +1,6 @@
 const express = require('express')
 const registration = require("./registration")
+const path = require('path');
 
 const app = express()
 const port = 3000
@@ -7,7 +8,7 @@ const port = 3000
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.sendFile(path.resolve('public/index.html'));
 })
 
 app.listen(port, () => {
@@ -25,9 +26,9 @@ app.get('/register/:id', async (req, res) => {
     res.send(reg);
 })
 
-app.put('/register/:id/status/:status', async (req, res) => {
+app.put('/register/:id', async (req, res) => {
     let id = req.params.id;
-    let status = req.params.status;
-    let reg = await registration.update(id, status);
+
+    let reg = await registration.update(id, req.body);
     res.send(reg);
 })

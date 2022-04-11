@@ -1,65 +1,69 @@
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, Button } from 'react-native';
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import * as Device from 'expo-device';
 
 
-import React, { Component } from 'react';
+const urlServer = "http://192.168.1.65:3000"
 
-import {
-  AppRegistry,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  Linking
-} from 'react-native';
+const updateRegistration = async (id) => {
+  const requestOptions = {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      device: Device.modelName,
+      status: 'alive'
+    })
+  };
 
-import QRCodeScanner from 'react-native-qrcode-scanner';
-import { RNCamera } from 'react-native-camera';
+  console.log(id);
+  fetch(urlServer + '/register/' + id , requestOptions)
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch(ex => console.log(ex))
+}
+
 
 export default function App() {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanned(true);
+    updateRegistration(data)
+  };
+
+
+
+  if (hasPermission === null) {
+    return <Text>Requesting for camera permission</Text>;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
+  }
+
   return (
-    <QRCodeScanner
-      
-      flashMode={RNCamera.Constants.FlashMode.torch}
-      topContent={
-        <Text style={styles.centerText}>
-          Go to{' '}
-          <Text style={styles.textBold}>wikipedia.org/wiki/QR_code</Text> on
-          your computer and scan the QR code.
-        </Text>
-      }
-      bottomContent={
-        <TouchableOpacity style={styles.buttonTouchable}>
-          <Text style={styles.buttonText}>OK. Got it!</Text>
-        </TouchableOpacity>
-      }
-    />
+    <View style={styles.container}>
+      <BarCodeScanner
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+        style={StyleSheet.absoluteFillObject}
+      />
+      {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
+    </View>
   );
 }
-/*
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
+    flexDirection: 'column',
     justifyContent: 'center',
   },
-});
-*/
-
-const styles = StyleSheet.create({
-  centerText: {
-    flex: 1,
-    fontSize: 18,
-    padding: 32,
-    color: '#777'
-  },
-  textBold: {
-    fontWeight: '500',
-    color: '#000'
-  },
-  buttonText: {
-    fontSize: 21,
-    color: 'rgb(0,122,255)'
-  },
-  buttonTouchable: {
-    padding: 16
-  }
 });

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Login</title>
+</head>
+
+<body>
+    <div id="qrcode"></div>
+    <div id="login"></div>
+</body>
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+<script>
+    let loggedIn = false;
+
+    const verifyStatus = async (register) => {
+        if (loggedIn) return;
+
+        const requestOptions = {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        };
+
+        let res = await fetch('http://localhost:3000/register/' + register.id, requestOptions)
+        let json = await res.json();
+
+        if (json.status != "alive") {
+            return;
+        }
+
+        document.getElementById("qrcode").style.display = 'none';
+        document.getElementById("login").append("Welcome " + json.device)
+
+        loggedIn = true;
+    }
+
+    const createQR = async () => {
+
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ device: "undefined" })
+        };
+
+        let res = await fetch('http://localhost:3000/register/', requestOptions)
+        let register = await res.json();
+
+        var qrcode = new QRCode(document.getElementById("qrcode"), {
+            text: register.id,
+            width: 500,
+            height: 500,
+            colorDark: "#5868bf",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        setInterval(() => verifyStatus(register), 200);
+    }
+
+
+    createQR();
+
+</script>
+
+</html>
